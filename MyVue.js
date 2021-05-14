@@ -193,8 +193,63 @@ class MyVue{
         this.$options = options
 
         if(this.$el){
-            //传入当前DOM节点(假设是)和MyVue实例
+
+            //Observer类数据观察者
+            new Observer(this.$data)
+
+            //Compile类指令解析器
             new Compile(this.$el,this)
         }
     }
+
+}
+
+//劫持监听所有属性的类
+class Observer{
+    constructor(data){
+        this.observe(data)
+    }
+
+    //定义数据监听函数------------------
+    observe(data){
+        //监听对象类型数据
+        if(data && typeof data === 'object'){
+
+            //遍历最外层的data
+            Object.keys(data).forEach(key =>{
+                this.defineReactive(data,key,data[key])
+            });
+        }
+    }
+
+    //定义数据数据劫持,参数：1对象 2键 3值
+    defineReactive(obj,key,value){
+
+        //递归遍历
+        this.observe(value)
+
+        //Object.defineProperty()方法会给对象定义一个新属性，或者修改现有属性，并返回这个对象
+        //参数 1修改的对象 2定义或修改的属性的名称 3将被定义或修改的属性描述符
+        Object.defineProperty(obj,key,{
+            enumerable:true,
+            configurable:false,
+
+            //获取值，访问该属性时，该方法会被执行，方法执行时没有参数传入
+            get(){
+                return value
+            },
+
+            //设置值，属性值修改时，触发执行该方法。该方法将接受唯一参数，即属性的新参数值
+            set:(newVal)=>{
+
+                //新的对象也要被监听,set改写为箭头函数确保this指向Observer
+                this.observe(newVal)
+
+                if(newVal !== value){
+                value = newVal
+             }
+        }
+    })
+}
+        
 }
